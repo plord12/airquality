@@ -1,0 +1,11 @@
+[Unit]
+Description=Air quality
+After=multi-user.target
+
+[Service]
+User=plord
+Type=idle
+ExecStart=/home/plord/src/airquality/bin/airquality
+
+[Install]
+WantedBy=multi-user.target
