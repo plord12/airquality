@@ -1,2 +1,0 @@
-# airquality
-Air quality monitor
