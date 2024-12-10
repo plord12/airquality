@@ -7,40 +7,124 @@ package main
 // #include "sensirion_i2c_hal.h"
 import "C"
 import (
-	"bytes"
 	"encoding/json"
-	"flag"
 	"fmt"
 	"log"
 	"math"
-	"net/http"
 	"os"
 	"os/exec"
 	"time"
 	"unsafe"
 
+	mqtt "github.com/eclipse/paho.mqtt.golang"
+	"github.com/jessevdk/go-flags"
 	"github.com/wcharczuk/go-chart/v2"
 	"github.com/wcharczuk/go-chart/v2/drawing"
 )
 
+type Options struct {
+	Broker    string `short:"b" long:"broker" description:"MQTT broker address" required:"true"`
+	Username  string `short:"u" long:"username" description:"MQTT broker username" required:"true"`
+	Password  string `short:"p" long:"password" description:"MQTT broker password" required:"true"`
+	BaseTopic string `short:"t" long:"basetopic" description:"MQTT base topic" default:"homeassistant/sensor/airquality"`
+}
+
+var options Options
+var parser = flags.NewParser(&options, flags.Default)
+
 func main() {
-
-	// Flags
-	var (
-		homeAssistantURL = flag.String("ha-url", "http://homeassistant.plord.co.uk:8123/api/webhook/airquality", "URL of home assistant api")
-	)
-	flag.Usage = func() {
-		fmt.Printf("Read SEN5x air quality and send to home assistant\n\nUsage: %s [flags]\n\nWhere [flags] can be:\n\n", os.Args[0])
-		flag.PrintDefaults()
-	}
-	flag.Parse()
-	if len(*homeAssistantURL) == 0 {
-		log.Println("Home assistant URL must be provided")
-		flag.PrintDefaults()
-		os.Exit(1)
+	// parse flags
+	//
+	_, err := parser.Parse()
+	if err != nil {
+		os.Exit(0)
 	}
 
-	C.sensirion_i2c_hal_init()
+	//mqtt.DEBUG = log.New(os.Stdout, "", 0)
+	mqtt.ERROR = log.New(os.Stdout, "", 0)
+	opts := mqtt.NewClientOptions().AddBroker(options.Broker).SetClientID("airquality")
+	opts.SetKeepAlive(2 * time.Second)
+	opts.SetPingTimeout(1 * time.Second)
+	opts = opts.SetUsername(options.Username)
+	opts = opts.SetPassword(options.Password)
+	c := mqtt.NewClient(opts)
+	if token := c.Connect(); token.Wait() && token.Error() != nil {
+		panic(token.Error())
+	}
+
+	// create MQTT configs
+	config, _ := json.Marshal(map[string]string{
+		"name":                "Air Quality PM1.0",
+		"unique_id":           "air_quality_pm1p0",
+		"object_id":           "air_quality_pm1p0",
+		"unit_of_measurement": "µg/m³",
+		"state_topic":         options.BaseTopic + "/air_quality_pm1p0/state",
+		"value_template":      "{{ value }}",
+	})
+	c.Publish(options.BaseTopic+"/air_quality_pm1p0/config", 0, true, config).Wait()
+	config, _ = json.Marshal(map[string]string{
+		"name":                "Air Quality PM2.5",
+		"unique_id":           "air_quality_pm2p5",
+		"object_id":           "air_quality_pm2p5",
+		"unit_of_measurement": "µg/m³",
+		"state_topic":         options.BaseTopic + "/air_quality_pm2p5/state",
+		"value_template":      "{{ value }}",
+	})
+	c.Publish(options.BaseTopic+"/air_quality_pm2p5/config", 0, true, config).Wait()
+	config, _ = json.Marshal(map[string]string{
+		"name":                "Air Quality PM4.0",
+		"unique_id":           "air_quality_pm4p0",
+		"object_id":           "air_quality_pm4p0",
+		"unit_of_measurement": "µg/m³",
+		"state_topic":         options.BaseTopic + "/air_quality_pm4p0/state",
+		"value_template":      "{{ value }}",
+	})
+	c.Publish(options.BaseTopic+"/air_quality_pm4p0/config", 0, true, config).Wait()
+	config, _ = json.Marshal(map[string]string{
+		"name":                "Air Quality PM10",
+		"unique_id":           "air_quality_pm10p0",
+		"object_id":           "air_quality_pm10p0",
+		"unit_of_measurement": "µg/m³",
+		"state_topic":         options.BaseTopic + "/air_quality_pm10p0/state",
+		"value_template":      "{{ value }}",
+	})
+	c.Publish(options.BaseTopic+"/air_quality_pm10p0/config", 0, true, config).Wait()
+	config, _ = json.Marshal(map[string]string{
+		"name":                "Air Quality Humidity",
+		"unique_id":           "air_quality_humidity",
+		"object_id":           "air_quality_humidity",
+		"unit_of_measurement": "%",
+		"state_topic":         options.BaseTopic + "/air_quality_humidity/state",
+		"value_template":      "{{ value }}",
+	})
+	c.Publish(options.BaseTopic+"/air_quality_humidity/config", 0, true, config).Wait()
+	config, _ = json.Marshal(map[string]string{
+		"name":                "Air Quality Temperature",
+		"unique_id":           "air_quality_temperature",
+		"object_id":           "air_quality_temperature",
+		"unit_of_measurement": "°C",
+		"state_topic":         options.BaseTopic + "/air_quality_temperature/state",
+		"value_template":      "{{ value }}",
+	})
+	c.Publish(options.BaseTopic+"/air_quality_temperature/config", 0, true, config).Wait()
+	config, _ = json.Marshal(map[string]string{
+		"name":           "Air Quality VOC",
+		"unique_id":      "air_quality_voc",
+		"object_id":      "air_quality_voc",
+		"state_topic":    options.BaseTopic + "/air_quality_voc/state",
+		"value_template": "{{ value }}",
+	})
+	c.Publish(options.BaseTopic+"/air_quality_voc/config", 0, true, config).Wait()
+	config, _ = json.Marshal(map[string]string{
+		"name":           "Air Quality NOX",
+		"unique_id":      "air_quality_nox",
+		"object_id":      "air_quality_nox",
+		"state_topic":    options.BaseTopic + "/air_quality_nox/state",
+		"value_template": "{{ value }}",
+	})
+	c.Publish(options.BaseTopic+"/air_quality_nox/config", 0, true, config).Wait()
+
+	C.sensirion_i2c_hal_init(C.CString("/dev/i2c-0"))
 
 	error := C.sen5x_device_reset()
 	if error == -1 {
@@ -119,21 +203,14 @@ func main() {
 		}
 
 		// call home assistant
-		postBody, _ := json.Marshal(map[string]string{
-			"mass_concentration_pm1p0":  fmt.Sprintf("%.1f", mass_concentration_pm1p0),
-			"mass_concentration_pm2p5":  fmt.Sprintf("%.1f", mass_concentration_pm2p5),
-			"mass_concentration_pm4p0":  fmt.Sprintf("%.1f", mass_concentration_pm4p0),
-			"mass_concentration_pm10p0": fmt.Sprintf("%.1f", mass_concentration_pm10p0),
-			"ambient_humidity":          fmt.Sprintf("%.1f", ambient_humidity),
-			"ambient_temperature":       fmt.Sprintf("%.1f", ambient_temperature),
-			"voc_index":                 fmt.Sprintf("%.1f", voc_index),
-			"nox_index":                 fmt.Sprintf("%.1f", nox_index),
-		})
-		responseBody := bytes.NewBuffer(postBody)
-		_, error := http.Post(*homeAssistantURL, "application/json", responseBody)
-		if error != nil {
-			fmt.Printf("post error=%v\n", error)
-		}
+		c.Publish(options.BaseTopic+"/air_quality_pm1p0/state", 0, false, fmt.Sprintf("%.1f", mass_concentration_pm1p0)).Wait()
+		c.Publish(options.BaseTopic+"/air_quality_pm2p5/state", 0, false, fmt.Sprintf("%.1f", mass_concentration_pm2p5)).Wait()
+		c.Publish(options.BaseTopic+"/air_quality_pm4p0/state", 0, false, fmt.Sprintf("%.1f", mass_concentration_pm4p0)).Wait()
+		c.Publish(options.BaseTopic+"/air_quality_pm10p0/state", 0, false, fmt.Sprintf("%.1f", mass_concentration_pm10p0)).Wait()
+		c.Publish(options.BaseTopic+"/air_quality_humidity/state", 0, false, fmt.Sprintf("%.1f", ambient_humidity)).Wait()
+		c.Publish(options.BaseTopic+"/air_quality_temperature/state", 0, false, fmt.Sprintf("%.1f", ambient_temperature)).Wait()
+		c.Publish(options.BaseTopic+"/air_quality_voc/state", 0, false, fmt.Sprintf("%.1f", voc_index)).Wait()
+		c.Publish(options.BaseTopic+"/air_quality_nox/state", 0, false, fmt.Sprintf("%.1f", nox_index)).Wait()
 
 		today := time.Now()
 		if today.Hour() < lastHour {
@@ -210,7 +287,7 @@ func main() {
 		}
 		f, _ := os.CreateTemp("", "pm1p0*.png")
 		os.Chmod(f.Name(), 0666)
-		error = graph.Render(chart.PNG, f)
+		error := graph.Render(chart.PNG, f)
 		if error != nil {
 			fmt.Printf("render error=%v\n", error)
 		}
