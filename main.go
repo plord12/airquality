@@ -58,8 +58,9 @@ func main() {
 		"unique_id":           "air_quality_pm1p0",
 		"object_id":           "air_quality_pm1p0",
 		"unit_of_measurement": "µg/m³",
+		"device_class":        "pm1",
 		"state_topic":         options.BaseTopic + "/air_quality_pm1p0/state",
-		"value_template":      "{{ value }}",
+		"value_template":      "{{ value | float(0) }}",
 	})
 	c.Publish(options.BaseTopic+"/air_quality_pm1p0/config", 0, true, config).Wait()
 	config, _ = json.Marshal(map[string]string{
@@ -67,8 +68,9 @@ func main() {
 		"unique_id":           "air_quality_pm2p5",
 		"object_id":           "air_quality_pm2p5",
 		"unit_of_measurement": "µg/m³",
+		"device_class":        "pm25",
 		"state_topic":         options.BaseTopic + "/air_quality_pm2p5/state",
-		"value_template":      "{{ value }}",
+		"value_template":      "{{ value | float(0) }}",
 	})
 	c.Publish(options.BaseTopic+"/air_quality_pm2p5/config", 0, true, config).Wait()
 	config, _ = json.Marshal(map[string]string{
@@ -76,8 +78,9 @@ func main() {
 		"unique_id":           "air_quality_pm4p0",
 		"object_id":           "air_quality_pm4p0",
 		"unit_of_measurement": "µg/m³",
+		"device_class":        "pm25",
 		"state_topic":         options.BaseTopic + "/air_quality_pm4p0/state",
-		"value_template":      "{{ value }}",
+		"value_template":      "{{ value | float(0) }}",
 	})
 	c.Publish(options.BaseTopic+"/air_quality_pm4p0/config", 0, true, config).Wait()
 	config, _ = json.Marshal(map[string]string{
@@ -85,8 +88,9 @@ func main() {
 		"unique_id":           "air_quality_pm10p0",
 		"object_id":           "air_quality_pm10p0",
 		"unit_of_measurement": "µg/m³",
+		"device_class":        "pm10",
 		"state_topic":         options.BaseTopic + "/air_quality_pm10p0/state",
-		"value_template":      "{{ value }}",
+		"value_template":      "{{ value | float(0) }}",
 	})
 	c.Publish(options.BaseTopic+"/air_quality_pm10p0/config", 0, true, config).Wait()
 	config, _ = json.Marshal(map[string]string{
@@ -94,8 +98,9 @@ func main() {
 		"unique_id":           "air_quality_humidity",
 		"object_id":           "air_quality_humidity",
 		"unit_of_measurement": "%",
+		"device_class":        "humidity",
 		"state_topic":         options.BaseTopic + "/air_quality_humidity/state",
-		"value_template":      "{{ value }}",
+		"value_template":      "{{ value | float(0) }}",
 	})
 	c.Publish(options.BaseTopic+"/air_quality_humidity/config", 0, true, config).Wait()
 	config, _ = json.Marshal(map[string]string{
@@ -103,24 +108,27 @@ func main() {
 		"unique_id":           "air_quality_temperature",
 		"object_id":           "air_quality_temperature",
 		"unit_of_measurement": "°C",
+		"device_class":        "temperature",
 		"state_topic":         options.BaseTopic + "/air_quality_temperature/state",
-		"value_template":      "{{ value }}",
+		"value_template":      "{{ value | float(0) }}",
 	})
 	c.Publish(options.BaseTopic+"/air_quality_temperature/config", 0, true, config).Wait()
 	config, _ = json.Marshal(map[string]string{
 		"name":           "Air Quality VOC",
 		"unique_id":      "air_quality_voc",
 		"object_id":      "air_quality_voc",
+		"device_class":   "aqi",
 		"state_topic":    options.BaseTopic + "/air_quality_voc/state",
-		"value_template": "{{ value }}",
+		"value_template": "{{ value | float(0) }}",
 	})
 	c.Publish(options.BaseTopic+"/air_quality_voc/config", 0, true, config).Wait()
 	config, _ = json.Marshal(map[string]string{
 		"name":           "Air Quality NOX",
 		"unique_id":      "air_quality_nox",
 		"object_id":      "air_quality_nox",
+		"device_class":   "aqi",
 		"state_topic":    options.BaseTopic + "/air_quality_nox/state",
-		"value_template": "{{ value }}",
+		"value_template": "{{ value | float(0) }}",
 	})
 	c.Publish(options.BaseTopic+"/air_quality_nox/config", 0, true, config).Wait()
 
